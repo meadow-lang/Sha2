@@ -3,7 +3,7 @@
 The SHA-2 hash functions of
 [FIPS 180-4](https://csrc.nist.gov/pubs/fips/180-4/upd1/final) (SHA-224,
 SHA-256, SHA-384, SHA-512, SHA-512/224 and SHA-512/256), for
-[Meadow](https://github.com/mcdearman/meadow).
+[Meadow](https://github.com/meadow-lang/meadow).
 
 This package is a port of Rust's [`sha2`](https://github.com/RustCrypto/hashes)
 0.10.9.
@@ -11,7 +11,7 @@ This package is a port of Rust's [`sha2`](https://github.com/RustCrypto/hashes)
 ## Install
 
 ```sh
-meadow add mcdearman/Sha2
+meadow add meadow-lang/Sha2
 ```
 
 ## Use
