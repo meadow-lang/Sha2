@@ -50,8 +50,7 @@ fun runCase i =
   let input = str i in
   let split = num (snd input) 3 in
   let rec readDigests k at acc =
-    if k >= 6
-    then (acc, at)
+    if k >= 6 then (acc, at)
     else
       let d = str at in
       readDigests (k + 1) (snd d) (V.pushBack acc (fst d))
@@ -62,15 +61,16 @@ fun runCase i =
   let n = arrayLen b in
   let pieces =
     V.map
-      (\alg -> toHex (finalize (update (update (new alg) (arraySlice b 0 (fst split))) (arraySlice b (fst split) n))))
+      (\alg ->
+        toHex
+          (finalize
+             (update (update (new alg) (arraySlice b 0 (fst split))) (arraySlice b (fst split) n))))
       algorithms
-  in
-  (fst input, (fst expected, fst expected), (whole, pieces), snd expected)
+  in (fst input, (fst expected, fst expected), (whole, pieces), snd expected)
 
 @cfg(test)
 fun check i bad =
-  if i >= stringByteLength cases
-  then bad
+  if i >= stringByteLength cases then bad
   else
     match runCase i with
     | (input, expected, got, next) ->
@@ -84,12 +84,19 @@ fun check i bad =
 @cfg(test)
 @test fun fipsExamples () =
   let abc = stringToBytes "abc" in
-  let a = assertEq (toHex (sha256 abc)) "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" "SHA-256" in
-  let b = assertEq (toHex (sha224 abc)) "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7" "SHA-224" in
-  assertEq
-    (toHex (sha512 abc))
-    (
-      "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
-        ++ "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"
-    )
-    "SHA-512"
+  let a =
+    assertEq
+      (toHex (sha256 abc))
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+      "SHA-256"
+  in
+  let b =
+    assertEq
+      (toHex (sha224 abc))
+      "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7"
+      "SHA-224"
+  in assertEq
+       (toHex (sha512 abc))
+       ("ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
+          ++ "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f")
+       "SHA-512"
