@@ -34,12 +34,10 @@
     5fcb6fab3ad6faec6c44198c4a475817"
 
 -- SHA-224's initial state.
-@pub(pkg) def h224 =
-  "c1059ed8367cd5073070dd17f70e5939ffc00b316858151164f98fa7befa4fa4"
+@pub(pkg) def h224 = "c1059ed8367cd5073070dd17f70e5939ffc00b316858151164f98fa7befa4fa4"
 
 -- SHA-256's initial state.
-@pub(pkg) def h256 =
-  "6a09e667bb67ae853c6ef372a54ff53a510e527f9b05688c1f83d9ab5be0cd19"
+@pub(pkg) def h256 = "6a09e667bb67ae853c6ef372a54ff53a510e527f9b05688c1f83d9ab5be0cd19"
 
 -- SHA-384's initial state.
 @pub(pkg) def h384 =

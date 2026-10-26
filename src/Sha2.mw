@@ -21,10 +21,10 @@ fun words32 s =
     let a = St.newArray n (toUInt32 0) in
     let _ =
       St.forRange 0 n (\k ->
-        let rec go j w = if j >= 8 then w else go (j + 1) (bitOr (w << 4) (toUInt32 (hexDigit s (8 * k + j)))) in
-        St.set a k (go 0 (toUInt32 0)))
-    in
-    St.freeze a)
+        let rec go j w =
+          if j >= 8 then w else go (j + 1) (bitOr (w << 4) (toUInt32 (hexDigit s (8 * k + j))))
+        in St.set a k (go 0 (toUInt32 0)))
+    in St.freeze a)
 
 -- The 64-bit words written as hex in `s`.
 fun words64 s =
@@ -33,10 +33,10 @@ fun words64 s =
     let a = St.newArray n (toUInt64 0) in
     let _ =
       St.forRange 0 n (\k ->
-        let rec go j w = if j >= 16 then w else go (j + 1) (bitOr (w << 4) (toUInt64 (hexDigit s (16 * k + j)))) in
-        St.set a k (go 0 (toUInt64 0)))
-    in
-    St.freeze a)
+        let rec go j w =
+          if j >= 16 then w else go (j + 1) (bitOr (w << 4) (toUInt64 (hexDigit s (16 * k + j))))
+        in St.set a k (go 0 (toUInt64 0)))
+    in St.freeze a)
 
 def rounds32 = words32 k32
 
@@ -67,8 +67,7 @@ fun compress32 (state : #[UInt32]) (bytes : #[UInt8]) at =
         St.set w i (St.get w (i - 16) + s0 + St.get w (i - 7) + s1))
     in
     let rec round i a b c d e f g h =
-      if i >= 64
-      then [a, b, c, d, e, f, g, h]
+      if i >= 64 then [a, b, c, d, e, f, g, h]
       else
         let s1 = bitXor (bitXor (rotr32 e 6) (rotr32 e 11)) (rotr32 e 25) in
         let ch = bitXor (bitAnd e f) (bitAnd (bitNot e) g) in
@@ -91,8 +90,9 @@ fun compress64 (state : #[UInt64]) (bytes : #[UInt8]) at =
     let byte = \i -> toUInt64 (arrayGet bytes (at + i)) in
     let _ =
       St.forRange 0 16 (\i ->
-        let rec go j acc = if j >= 8 then acc else go (j + 1) (bitOr (acc << 8) (byte (8 * i + j))) in
-        St.set w i (go 0 (toUInt64 0)))
+        let rec go j acc =
+          if j >= 8 then acc else go (j + 1) (bitOr (acc << 8) (byte (8 * i + j)))
+        in St.set w i (go 0 (toUInt64 0)))
     in
     let _ =
       St.forRange 16 80 (\i ->
@@ -103,8 +103,7 @@ fun compress64 (state : #[UInt64]) (bytes : #[UInt8]) at =
         St.set w i (St.get w (i - 16) + s0 + St.get w (i - 7) + s1))
     in
     let rec round i a b c d e f g h =
-      if i >= 80
-      then [a, b, c, d, e, f, g, h]
+      if i >= 80 then [a, b, c, d, e, f, g, h]
       else
         let s1 = bitXor (bitXor (rotr64 e 14) (rotr64 e 18)) (rotr64 e 41) in
         let ch = bitXor (bitAnd e f) (bitAnd (bitNot e) g) in
@@ -122,7 +121,13 @@ fun compress64 (state : #[UInt64]) (bytes : #[UInt8]) at =
 
 -- --- hashers ------------------------------------------------------------------------------
 
-@pub data Algorithm = Sha224 | Sha256 | Sha384 | Sha512 | Sha512t224 | Sha512t256
+@pub data Algorithm
+  = Sha224
+  | Sha256
+  | Sha384
+  | Sha512
+  | Sha512t224
+  | Sha512t256
 
 -- A hash being computed: the state, the bytes not yet making a block, and how
 -- many bytes have gone in.
@@ -165,21 +170,22 @@ fun wide alg =
     | Algorithm.Sha512t224 -> words64 h512t224
     | Algorithm.Sha512t256 -> words64 h512t256
     | _ -> #[]
-  in
-  Hasher { algorithm = alg, state32 = s32, state64 = s64, pending = #[], total = 0 }
+  in Hasher { algorithm = alg, state32 = s32, state64 = s64, pending = #[], total = 0 }
 
 -- `h` after every whole block of `bytes`, with what is left over pending.
 fun absorb (h : Hasher) (bytes : #[UInt8]) =
   let size = if wide h.algorithm then 128 else 64 in
   let blocks = arrayLen bytes / size in
   let rec go k s32 s64 =
-    if k >= blocks
-    then { h | state32 = s32, state64 = s64, pending = arraySlice bytes (blocks * size) (arrayLen bytes) }
-    else if wide h.algorithm
-    then go (k + 1) s32 (compress64 s64 bytes (k * size))
+    if k >= blocks then
+      {
+        h | state32 = s32,
+        state64 = s64,
+        pending = arraySlice bytes (blocks * size) (arrayLen bytes)
+      }
+    else if wide h.algorithm then go (k + 1) s32 (compress64 s64 bytes (k * size))
     else go (k + 1) (compress32 s32 bytes (k * size)) s64
-  in
-  go 0 h.state32 h.state64
+  in go 0 h.state32 h.state64
 
 -- `h` with `bytes` added.
 @pub fun update (h : Hasher) (bytes : #[UInt8]) =
@@ -198,19 +204,22 @@ fun absorb (h : Hasher) (bytes : #[UInt8]) =
       let t = St.newArray padded (toUInt8 0) in
       let _ = St.forRange 0 (arrayLen h.pending) (\i -> St.set t i (arrayGet h.pending i)) in
       let _ = St.set t (arrayLen h.pending) (toUInt8 0x80) in
-      let _ = St.forRange 0 8 (\k -> St.set t (padded - 1 - k) (toUInt8 (bitAnd (bits >> (8 * k)) 255))) in
-      St.freeze t)
+      let _ =
+        St.forRange 0 8 (\k -> St.set t (padded - 1 - k) (toUInt8 (bitAnd (bits >> (8 * k)) 255)))
+      in St.freeze t)
   in
   let done = absorb { h | pending = #[] } tail in
   let n = outputSize h.algorithm in
   runSt (\() ->
     let out = St.newArray n (toUInt8 0) in
     let _ =
-      if wide h.algorithm
-      then St.forRange 0 n (\i -> St.set out i (toUInt8 (arrayGet done.state64 (i / 8) >> (8 * (7 - i % 8)))))
-      else St.forRange 0 n (\i -> St.set out i (toUInt8 (arrayGet done.state32 (i / 4) >> (8 * (3 - i % 4)))))
-    in
-    St.freeze out)
+      if wide h.algorithm then
+        St.forRange 0 n (\i ->
+          St.set out i (toUInt8 (arrayGet done.state64 (i / 8) >> (8 * (7 - i % 8)))))
+      else
+        St.forRange 0 n (\i ->
+          St.set out i (toUInt8 (arrayGet done.state32 (i / 4) >> (8 * (3 - i % 4)))))
+    in St.freeze out)
 
 -- The digest of `bytes` by `alg`.
 @pub fun digest alg (bytes : #[UInt8]) = finalize (update (new alg) bytes)
@@ -231,12 +240,11 @@ fun absorb (h : Hasher) (bytes : #[UInt8]) =
   let digit = \d -> if d < 10 then 48 + d else 87 + d in
   bytesToString
     (runSt (\() ->
-      let n = arrayLen bytes in
-      let out = St.newArray (2 * n) (toUInt8 0) in
-      let _ =
-        St.forRange 0 n (\i ->
-          let b = toInt (arrayGet bytes i) in
-          let _ = St.set out (2 * i) (toUInt8 (digit (b / 16))) in
-          St.set out (2 * i + 1) (toUInt8 (digit (b % 16))))
-      in
-      St.freeze out))
+       let n = arrayLen bytes in
+       let out = St.newArray (2 * n) (toUInt8 0) in
+       let _ =
+         St.forRange 0 n (\i ->
+           let b = toInt (arrayGet bytes i) in
+           let _ = St.set out (2 * i) (toUInt8 (digit (b / 16))) in
+           St.set out (2 * i + 1) (toUInt8 (digit (b % 16))))
+       in St.freeze out))
